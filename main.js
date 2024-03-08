@@ -28,7 +28,7 @@ let global_top = 0;
 /// 动画过程数值
 let anime = {
   /// 开始时间, 仅用于动画过时检测
-  start: 0,
+  start: Date.now(),
   /// 目前的动画id
   cur_id: 0,
   /// 动画开始时的left
