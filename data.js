@@ -10,8 +10,10 @@ const DRAW_HEIGHT = 0|(HEIGHT / 2.5);
 // 绘制属性距离
 const DRAW_MARGIN = 10;
 
-// 鼠标拖动惯性时间
-const ANIME_DELAY = 300;
+// 鼠标拖动惯性量(<1)
+const ANIME_RATE = 0.03;
+// 动画超时(ms), 多大都行不影响性能
+const ANIME_TIMEOUT = 3000;
 
 const DATA = [
   {

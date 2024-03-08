@@ -27,7 +27,7 @@ let global_left = 0;
 let global_top = 0;
 /// 动画过程数值
 let anime = {
-  /// 开始时间
+  /// 开始时间, 仅用于动画过时检测
   start: 0,
   /// 目前的动画id
   cur_id: 0,
@@ -41,15 +41,12 @@ let anime = {
 /// 画一帧
 function draw_frame() {
   cx.clearRect(0, 0, w, h);
-  // 动画进行的比例
-  let anime_rate = (performance.now() - anime.start) / ANIME_DELAY;
+  cancelAnimationFrame(anime.cur_id);
   // 动画时间还没结束就调用下一帧
-  if (anime_rate<1) {
+  if (anime.start + ANIME_TIMEOUT > Date.now()) {
     // 设置动画开始状态
-    anime.start = performance.now();
-    anime.left += (global_left - anime.left) * anime_rate;
-    anime.top += (global_top - anime.top) * anime_rate;
-    cancelAnimationFrame(anime.cur_id);
+    anime.left += (global_left - anime.left) * ANIME_RATE;
+    anime.top += (global_top - anime.top) * ANIME_RATE;
     anime.cur_id = requestAnimationFrame(draw_frame);
   }
   // 最左侧的列的左边 距离屏幕左边的距离
@@ -95,16 +92,13 @@ function draw_frame() {
 draw_frame()
 
 /// 绑定按钮
-window.addEventListener("mousedown",(e)=>{
-  let start_left = global_left;
-  let start_x = e.clientX;
-  let start_top = global_top;
-  let start_y = e.clientY;
+window.addEventListener("mousedown",()=>{
   draw_frame();
 
   let mousemove = (e)=> {
-    global_left = start_left + (e.clientX - start_x) * 2;
-    global_top = start_top + (e.clientY - start_y) * 2;
+    global_left += e.movementX*2;
+    global_top += e.movementY*2;
+    anime.start = Date.now();
     draw_frame();
   };
   let mouseup = (e)=> {
