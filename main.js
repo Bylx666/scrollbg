@@ -27,8 +27,6 @@ let global_left = 0;
 let global_top = 0;
 /// 动画过程数值
 let anime = {
-  /// 开始时间, 仅用于动画过时检测
-  start: Date.now(),
   /// 目前的动画id
   cur_id: 0,
   /// 动画开始时的left
@@ -41,14 +39,20 @@ let anime = {
 /// 画一帧
 function draw_frame() {
   cx.clearRect(0, 0, w, h);
+  // 把上次mousemove请求的帧取消, 换成这次的渲染
   cancelAnimationFrame(anime.cur_id);
-  // 动画时间还没结束就调用下一帧
-  if (anime.start + ANIME_TIMEOUT > Date.now()) {
-    // 设置动画开始状态
-    anime.left += (global_left - anime.left) * ANIME_RATE;
-    anime.top += (global_top - anime.top) * ANIME_RATE;
+
+  // 设置动画开始状态
+  anime.left += (global_left - anime.left) * ANIME_RATE;
+  if(Math.abs(anime.left - global_left) < 5) global_left = anime.left;
+  anime.top += (global_top - anime.top) * ANIME_RATE;
+  if(Math.abs(anime.top - global_top) < 5) global_top = anime.top;
+
+    // anime.left = global_left;
+    // anime.top = global_top;
+  if(anime.left!==global_left||anime.top!==global_top)
     anime.cur_id = requestAnimationFrame(draw_frame);
-  }
+
   // 最左侧的列的左边 距离屏幕左边的距离
   let left = anime.left % DRAW_WIDTH;
   // 求出整数结果, 作为左侧第一个渲染的列的索引
@@ -65,11 +69,11 @@ function draw_frame() {
     // 以下运作同left
     let y = anime.top * speed;
     // 减个DRAW_HEIGHT防白边
-    let top = y % DRAW_HEIGHT - DRAW_HEIGHT;
+    let top = y % DRAW_HEIGHT;
     let line_first = Math.floor(Math.abs(y / DRAW_HEIGHT));
     // 向上移动特殊处理
     if (global_top>0) {
-      top = top - DRAW_HEIGHT;
+      top -= DRAW_HEIGHT;
       line_first = lines.length - (line_first + 1) % lines.length;
     }
     let line_len = line_max + line_first + 1;
@@ -77,19 +81,18 @@ function draw_frame() {
     for(let line_i=line_first; line_i<line_len; ++line_i) {
       let img = lines[line_i==0?0:line_i%lines.length];
       // 用离屏幕最近但在屏幕外的坐标作为原点, 用循环次数*(宽高 + 间距)作为偏移绘制该图像
-      let x = left + (col_i - col_first) * (DRAW_WIDTH + DRAW_MARGIN);
-      let y = top + (line_i - line_first) * (DRAW_HEIGHT + DRAW_MARGIN);
+      let x = left + (col_i - col_first) * DRAW_WIDTH;
+      let y = top + (line_i - line_first) * DRAW_HEIGHT;
       cx.drawImage(
         img, 
         x,
         y, 
-        DRAW_WIDTH, 
-        DRAW_HEIGHT
+        DRAW_WIDTH - DRAW_MARGIN, 
+        DRAW_HEIGHT - DRAW_MARGIN
       )
     }
   }
 }
-draw_frame()
 
 /// 绑定按钮
 window.addEventListener("mousedown",()=>{
@@ -101,7 +104,7 @@ window.addEventListener("mousedown",()=>{
     anime.start = Date.now();
     draw_frame();
   };
-  let mouseup = (e)=> {
+  let mouseup = ()=> {
     window.removeEventListener("mousemove", mousemove);
     window.removeEventListener("mouseup", mouseup);
   }
